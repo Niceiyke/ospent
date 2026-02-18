@@ -1,50 +1,67 @@
-# React + TypeScript + Vite
+# Ospent - Intelligence Ledger & Budget Strategist
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ospent is a modern, high-performance financial tracking application built for those who demand precision and aesthetic excellence. It transitions beyond simple tracking into a "Fiscal Strategy" tool with advanced classification and reporting.
 
-Currently, two official plugins are available:
+![Version](https://img.shields.io/badge/version-1.1.0-emerald)
+![Tech](https://img.shields.io/badge/tech-React_18_|_Node_|_SQLite-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Key Features
 
-## Expanding the ESLint configuration
+- **Master Ledger:** Real-time inbound and outbound transaction tracking with Naira (₦) as base currency.
+- **Budget Strategy:** Sector-based allocation with visual utilization audits.
+- **Intelligence Reports:** 
+  - Net Position tracking (Surplus vs. Deficit).
+  - Multi-granularity Analysis: Daily, Weekly, Monthly, Quarterly, and Yearly views.
+  - Capital vs. Recurring classification for deep fiscal insight.
+- **Cyber-Minimalist UI:** A professional Deep Slate & Emerald theme with seamless Dark/Light mode support.
+- **Mobile First:** Optimized for high-velocity entry on touch devices with a responsive bottom navigation.
+- **Secure Authentication:** JWT-protected sessions with a persistent SQLite backend.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## 🛠 Tech Stack
 
-- Configure the top-level `parserOptions` property like this:
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS v4.
+- **State/Hooks:** Custom Hooks for Transactions, Budgets, Categories, and Auth.
+- **Charts:** Recharts for advanced data visualization.
+- **Icons:** Lucide React.
+- **Backend:** Node.js, Express, Better-SQLite3.
+- **Security:** Bcrypt.js, JWT.
+- **DevOps:** Docker, Docker Compose, Traefik (Edge Network).
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 🏃‍♂️ Deployment
+
+The application is fully containerized.
+
+```bash
+# 1. Clone the repository
+git clone git@github.com:Niceiyke/ospent.git
+cd ospent
+
+# 2. Start the infrastructure
+docker compose up -d --build
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+Access the master node at: `https://ospent.wordlyte.com`
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+**Default Credentials:**
+- **Username:** `testuser`
+- **Password:** `testpassword`
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+## 🧪 Testing
+
+The system includes a suite of Vitest units for core hooks and components.
+
+```bash
+npm run test
 ```
+
+## 🏗 Architecture
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the detailed engineering blueprint and data models.
+
+## 🔮 Roadmap
+
+- [ ] CSV / Google Sheets Import Agent.
+- [ ] Predictive Spending Forecast (AI-driven).
+- [ ] Multi-user Collaboration for shared budgets.
+- [ ] Push Notifications for budget alerts.
