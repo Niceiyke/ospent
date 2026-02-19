@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { useBudgets } from '../../hooks/useBudgets';
 import { useTransactions } from '../../hooks/useTransactions';
+import { useAuth } from '../../hooks/useAuth';
 import { BudgetCard } from './BudgetCard';
-import { X, Sliders, Target } from 'lucide-react';
+import { X, Sliders, Target, Wallet, Check } from 'lucide-react';
+import { formatCurrency } from '../../lib/utils';
 
 export const BudgetView: React.FC = () => {
   const { budgets, updateBudget } = useBudgets();
   const { transactions } = useTransactions();
+  const { user, updateMonthlyBudget } = useAuth();
   const [editingBudget, setEditingBudget] = useState<{ id: string; limit: number; name: string } | null>(null);
+  const [isEditingGlobal, setIsEditingGlobal] = useState(false);
+  const [globalBudgetInput, setGlobalBudgetInput] = useState(user?.monthlyBudget?.toString() || '0');
 
   const getSpent = (categoryName: string) => {
     return transactions
@@ -22,12 +27,93 @@ export const BudgetView: React.FC = () => {
     }
   };
 
+  const handleGlobalUpdate = () => {
+    updateMonthlyBudget(parseFloat(globalBudgetInput) || 0);
+    setIsEditingGlobal(false);
+  };
+
+  const totalSpent = transactions
+    .filter((t) => t.type === 'expense')
+    .reduce((acc, t) => acc + Math.abs(t.amount), 0);
+
+  const totalAllocated = budgets.reduce((acc, b) => acc + (b.budgetLimit || 0), 0);
+  const globalBudget = user?.monthlyBudget || 0;
+  const unallocated = globalBudget - totalAllocated;
+  const masterPercentage = globalBudget > 0 ? (totalSpent / globalBudget) * 100 : 0;
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
-      <header className="space-y-2">
-        <h2 className="text-3xl font-extrabold tracking-tight text-primary">Budget Strategy</h2>
-        <p className="text-sm font-medium text-ui-dim">Allocate your capital across sectors</p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h2 className="text-3xl font-extrabold tracking-tight text-primary">Budget Strategy</h2>
+          <p className="text-sm font-medium text-ui-dim">Manage your global capital distribution</p>
+        </div>
+
+        {/* Global Budget Controller */}
+        <div className="relative overflow-hidden rounded-3xl bg-ui-card border border-ui p-4 sm:w-64 shadow-xl">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-black uppercase tracking-widest text-ui-dim">Master Limit</span>
+            <Wallet className="h-3 w-3 text-primary" />
+          </div>
+          {isEditingGlobal ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                value={globalBudgetInput}
+                onChange={(e) => setGlobalBudgetInput(e.target.value)}
+                className="w-full bg-transparent border-b border-primary text-lg font-black text-ui-main outline-none"
+                autoFocus
+              />
+              <button onClick={handleGlobalUpdate} className="text-primary hover:scale-110 transition-transform">
+                <Check className="h-5 w-5 stroke-[3]" />
+              </button>
+            </div>
+          ) : (
+            <div 
+              className="flex items-center justify-between cursor-pointer group"
+              onClick={() => setIsEditingGlobal(true)}
+            >
+              <h3 className="text-xl font-black text-ui-main">{formatCurrency(globalBudget)}</h3>
+              <Sliders className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          )}
+        </div>
       </header>
+
+      {/* Master Summary Card */}
+      <section className="rounded-[2.5rem] bg-primary/5 border border-primary/20 p-8 shadow-inner">
+        <div className="grid gap-8 md:grid-cols-3">
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-ui-dim">Allocation Status</p>
+            <div className="flex items-baseline gap-2">
+              <h4 className="text-3xl font-black text-ui-main">{formatCurrency(totalAllocated)}</h4>
+              <span className="text-xs font-bold text-ui-dim text-nowrap">Allocated</span>
+            </div>
+            <p className={`text-[10px] font-bold uppercase ${unallocated < 0 ? 'text-rose-500' : 'text-primary'}`}>
+              {unallocated >= 0 ? `${formatCurrency(unallocated)} Available to assign` : `Over-allocated by ${formatCurrency(Math.abs(unallocated))}`}
+            </p>
+          </div>
+
+          <div className="md:col-span-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-ui-dim">Master Consumption</p>
+              <span className="text-xs font-black text-primary">{masterPercentage.toFixed(1)}%</span>
+            </div>
+            <div className="h-4 w-full rounded-full bg-ui-main border border-ui overflow-hidden p-1 shadow-inner">
+              <div 
+                className={`h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(16,185,129,0.4)] ${masterPercentage > 100 ? 'bg-rose-500' : 'bg-primary'}`}
+                style={{ width: `${Math.min(masterPercentage, 100)}%` }}
+              ></div>
+            </div>
+            <div className="flex justify-between items-center">
+               <p className="text-[10px] font-bold text-ui-dim uppercase tracking-widest">
+                 {formatCurrency(totalSpent)} spent of {formatCurrency(globalBudget)}
+               </p>
+               {masterPercentage > 100 && <span className="text-[10px] font-black text-rose-500 uppercase animate-pulse">Critical: Limit Exceeded</span>}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="grid gap-8 md:grid-cols-2">
         {budgets.length > 0 ? budgets.map((budget) => (

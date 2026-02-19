@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
+import { useAuth } from '../hooks/useAuth';
 import { formatCurrency } from '../lib/utils';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, 
@@ -13,19 +14,33 @@ type TimeFrame = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 export const ReportsView: React.FC = () => {
   const { transactions } = useTransactions();
   const { categories } = useCategories();
+  const { user } = useAuth();
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('monthly');
 
   // Logic for analysis
   const analysisData = useMemo(() => {
+    const normalizeToMonthly = (amount: number, interval: 'weekly' | 'monthly' | 'yearly') => {
+      if (interval === 'weekly') return amount * 4.33; // Avg weeks in month
+      if (interval === 'yearly') return amount / 12;
+      return amount;
+    };
+
     // Simple grouping logic for the chart
-    // In a real app, this would be more complex date handling
     const expenseByCategory = categories
       .filter(c => c.type === 'expense')
       .map(cat => {
         const spent = transactions
           .filter(t => t.category_id === cat.id && t.type === 'expense')
           .reduce((acc, t) => acc + Math.abs(t.amount), 0);
-        return { name: cat.name, value: spent, color: cat.color, limit: cat.budgetLimit };
+        
+        const monthlyLimit = normalizeToMonthly(cat.budgetLimit || 0, cat.budgetInterval || 'monthly');
+        
+        return { 
+          name: cat.name, 
+          value: spent, 
+          color: cat.color, 
+          limit: monthlyLimit 
+        };
       })
       .filter(d => d.value > 0 || d.limit > 0);
 
@@ -37,14 +52,19 @@ export const ReportsView: React.FC = () => {
       .filter(t => t.type === 'expense')
       .reduce((acc, t) => acc + Math.abs(t.amount), 0);
 
-    const totalBudget = categories
+    const totalCategoryBudget = categories
       .filter(c => c.type === 'expense')
       .reduce((acc, c) => acc + (c.budgetLimit || 0), 0);
 
-    return { expenseByCategory, totalIncome, totalExpense, totalBudget };
-  }, [transactions, categories]);
+    return { 
+      expenseByCategory, 
+      totalIncome, 
+      totalExpense, 
+      totalBudget: user?.monthlyBudget || totalCategoryBudget 
+    };
+  }, [transactions, categories, user?.monthlyBudget]);
 
-  const surplus = analysisData.totalIncome - analysisData.totalExpense;
+  const surplus = analysisData.totalBudget - analysisData.totalExpense;
   const budgetUtilization = analysisData.totalBudget > 0 
     ? (analysisData.totalExpense / analysisData.totalBudget) * 100 
     : 0;

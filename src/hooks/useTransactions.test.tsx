@@ -2,10 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useTransactions } from '../hooks/useTransactions';
 import { AuthProvider } from '../hooks/useAuth';
-import React from 'react';
 
 // Mock fetch
-global.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <AuthProvider>{children}</AuthProvider>
@@ -24,7 +23,10 @@ describe('useTransactions', () => {
     
     (fetch as any).mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve(mockTransactions),
+      json: () => Promise.resolve({
+        data: mockTransactions,
+        pagination: { page: 1, limit: 10, total: 1, totalPages: 1 }
+      }),
     });
 
     // Mock token in localStorage to trigger fetch

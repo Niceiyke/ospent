@@ -4,12 +4,13 @@ WORKDIR /app
 
 RUN apk add --no-cache make gcc g++ python3
 
-COPY package*.json ./
+COPY server/package*.json ./server/
+WORKDIR /app/server
 RUN npm install
 
-# We only need the server code
+WORKDIR /app
 COPY server/ ./server/
-# Ensure db directory exists
+
 RUN mkdir -p server/db
 
 EXPOSE 3001

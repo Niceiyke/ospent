@@ -2,32 +2,47 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { Transaction } from '../types';
 
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+interface PaginatedResponse {
+  data: Transaction[];
+  pagination: Pagination;
+}
+
 export const useTransactions = () => {
-  const { token, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 50, total: 0, totalPages: 0 });
 
-  const fetchTransactions = useCallback(async () => {
-    if (!token) return;
+  const fetchTransactions = useCallback(async (page = 1) => {
+    if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/transactions', {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch(`/api/transactions?page=${page}&limit=50`, {
+        credentials: 'include'
       });
       if (!res.ok) throw new Error('Failed to fetch transactions');
-      const data = await res.json();
-      setTransactions(data);
-    } catch (err: any) {
-      setError(err.message);
+      const data: PaginatedResponse = await res.json();
+      setTransactions(data.data);
+      setPagination(data.pagination);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [user]);
 
   useEffect(() => {
-    if (isAuthenticated) fetchTransactions();
-  }, [isAuthenticated, fetchTransactions]);
+    if (user) fetchTransactions();
+  }, [user, fetchTransactions]);
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     try {
@@ -35,14 +50,59 @@ export const useTransactions = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify(transaction),
       });
-      if (!res.ok) throw new Error('Failed to add transaction');
-      fetchTransactions();
-    } catch (err: any) {
-      setError(err.message);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to add transaction');
+      }
+      await fetchTransactions(pagination.page);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
+      throw err;
+    }
+  };
+
+  const updateTransaction = async (id: string, updates: Omit<Transaction, 'id'>) => {
+    try {
+      const res = await fetch(`/api/transactions/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to update transaction');
+      }
+      await fetchTransactions(pagination.page);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
+      throw err;
+    }
+  };
+
+  const deleteTransaction = async (id: string) => {
+    try {
+      const res = await fetch(`/api/transactions/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete transaction');
+      }
+      await fetchTransactions(pagination.page);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
+      throw err;
     }
   };
 
@@ -66,12 +126,15 @@ export const useTransactions = () => {
     transactions,
     loading,
     error,
+    pagination,
     addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    refresh: fetchTransactions,
     stats: {
       balance: getBalance(),
       income: getIncome(),
       expense: getExpense(),
-    },
-    refresh: fetchTransactions
+    }
   };
 };

@@ -3,50 +3,52 @@ import { useAuth } from './useAuth';
 import { Category } from '../types';
 
 export const useCategories = () => {
-  const { token, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCategories = useCallback(async () => {
-    if (!token) return;
+    if (!user) return;
     setLoading(true);
     try {
       const res = await fetch('/api/categories', {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include'
       });
       if (!res.ok) throw new Error('Failed to fetch categories');
       const data = await res.json();
       setCategories(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [user]);
 
   useEffect(() => {
-    if (isAuthenticated) fetchCategories();
-  }, [isAuthenticated, fetchCategories]);
+    if (user) fetchCategories();
+  }, [user, fetchCategories]);
 
   const addCategory = async (category: Omit<Category, 'id'>) => {
     try {
-      const payload = {
-        ...category,
-        budget_limit: category.budgetLimit
-      };
       const res = await fetch('/api/categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        credentials: 'include',
+        body: JSON.stringify(category),
       });
-      if (!res.ok) throw new Error('Failed to add category');
-      fetchCategories();
-    } catch (err: any) {
-      setError(err.message);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to add category');
+      }
+      await fetchCategories();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
+      throw err;
     }
   };
 
@@ -54,33 +56,39 @@ export const useCategories = () => {
     try {
       const res = await fetch(`/api/categories/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include'
       });
-      if (!res.ok) throw new Error('Failed to delete category');
-      fetchCategories();
-    } catch (err: any) {
-      setError(err.message);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete category');
+      }
+      await fetchCategories();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
+      throw err;
     }
   };
 
   const updateCategory = async (id: string, updates: Partial<Category>) => {
     try {
-      const payload = {
-        ...updates,
-        budget_limit: updates.budgetLimit
-      };
       const res = await fetch(`/api/categories/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        credentials: 'include',
+        body: JSON.stringify(updates),
       });
-      if (!res.ok) throw new Error('Failed to update category');
-      fetchCategories();
-    } catch (err: any) {
-      setError(err.message);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to update category');
+      }
+      await fetchCategories();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
+      throw err;
     }
   };
 

@@ -20,6 +20,10 @@ services:
       dockerfile: server/Dockerfile
     container_name: ospent-backend
     restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ospent-db:/app/server/db
     networks:

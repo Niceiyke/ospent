@@ -18,6 +18,7 @@ export interface Category {
   name: string;
   color: string;
   budgetLimit: number;
+  budgetInterval: 'weekly' | 'monthly' | 'yearly';
   type: TransactionType;
   isCapital?: boolean;
   isRecurring?: boolean;

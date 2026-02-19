@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BalanceCard } from './BalanceCard';
-import React from 'react';
 
 describe('BalanceCard', () => {
   it('should render balance correctly', () => {

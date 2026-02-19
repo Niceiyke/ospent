@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCategories } from '../hooks/useCategories';
 import { AuthProvider } from '../hooks/useAuth';
-import React from 'react';
 
-global.fetch = vi.fn();
+// Mock fetch
+vi.stubGlobal('fetch', vi.fn());
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <AuthProvider>{children}</AuthProvider>

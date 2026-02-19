@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { useCategories } from '../hooks/useCategories';
 import { Plus, Trash2, Tag, ArrowUpCircle, ArrowDownCircle, Pencil, X, RefreshCcw, Landmark, Palette } from 'lucide-react';
 import { Category, TransactionType } from '../types';
+import { formatCurrency } from '../lib/utils';
 
 export const ManageCategories: React.FC = () => {
   const { categories, addCategory, deleteCategory, updateCategory } = useCategories();
   const [name, setName] = useState('');
   const [color, setColor] = useState('#10b981');
+  const [budgetLimit, setBudgetLimit] = useState('');
+  const [budgetInterval, setBudgetInterval] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
   const [type, setType] = useState<TransactionType>('expense');
   const [isCapital, setIsCapital] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
@@ -15,14 +18,26 @@ export const ManageCategories: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
+  const [editBudgetLimit, setEditBudgetLimit] = useState('');
+  const [editBudgetInterval, setEditBudgetInterval] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
   const [editIsCapital, setEditIsCapital] = useState(false);
   const [editIsRecurring, setEditIsRecurring] = useState(false);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) return;
-    addCategory({ name, color, type, budgetLimit: 0, isCapital, isRecurring });
+    addCategory({ 
+      name, 
+      color, 
+      type, 
+      budgetLimit: parseFloat(budgetLimit) || 0, 
+      budgetInterval,
+      isCapital, 
+      isRecurring 
+    });
     setName('');
+    setBudgetLimit('');
+    setBudgetInterval('monthly');
     setColor('#10b981');
     setIsCapital(false);
     setIsRecurring(false);
@@ -32,6 +47,8 @@ export const ManageCategories: React.FC = () => {
     setEditingId(cat.id);
     setEditName(cat.name);
     setEditColor(cat.color);
+    setEditBudgetLimit(cat.budgetLimit?.toString() || '0');
+    setEditBudgetInterval(cat.budgetInterval || 'monthly');
     setEditIsCapital(cat.isCapital || false);
     setEditIsRecurring(cat.isRecurring || false);
   };
@@ -45,6 +62,8 @@ export const ManageCategories: React.FC = () => {
     await updateCategory(id, { 
       name: editName, 
       color: editColor, 
+      budgetLimit: parseFloat(editBudgetLimit) || 0,
+      budgetInterval: editBudgetInterval,
       isCapital: editIsCapital, 
       isRecurring: editIsRecurring 
     });
@@ -81,6 +100,36 @@ export const ManageCategories: React.FC = () => {
                 />
               </div>
             </div>
+
+            {type === 'expense' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-ui-dim">Monthly Budget (₦)</label>
+                  <div className="relative">
+                    <Landmark className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ui-dim" />
+                    <input
+                      type="number"
+                      value={budgetLimit}
+                      onChange={(e) => setBudgetLimit(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full rounded-2xl border-2 border-ui bg-ui-main/50 py-4 pl-12 pr-4 font-bold text-ui-main outline-none focus:border-primary transition-all"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-ui-dim">Interval</label>
+                  <select
+                    value={budgetInterval}
+                    onChange={(e) => setBudgetInterval(e.target.value as any)}
+                    className="w-full rounded-2xl border-2 border-ui bg-ui-main/50 py-4 px-4 font-bold text-ui-main outline-none focus:border-primary transition-all appearance-none"
+                  >
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </div>
+              </div>
+            )}
             
             <div className="flex gap-2 rounded-2xl bg-ui-main/50 p-1 border border-ui">
               <button
@@ -169,20 +218,45 @@ export const ManageCategories: React.FC = () => {
                 <div key={cat.id} className="group relative flex flex-col rounded-3xl bg-ui-card p-5 border border-ui transition-all hover:border-primary/30">
                   {editingId === cat.id ? (
                     <div className="space-y-4 animate-in fade-in duration-200">
-                      <div className="flex items-center gap-3">
-                        <input 
-                          type="color" 
-                          value={editColor} 
-                          onChange={(e) => setEditColor(e.target.value)}
-                          className="h-10 w-10 cursor-pointer rounded-lg border-none bg-transparent"
-                        />
-                        <input
-                          type="text"
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="flex-1 rounded-xl border border-ui bg-ui-main/50 px-3 py-2 font-bold text-ui-main outline-none focus:border-primary"
-                          autoFocus
-                        />
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-3">
+                          <input 
+                            type="color" 
+                            value={editColor} 
+                            onChange={(e) => setEditColor(e.target.value)}
+                            className="h-10 w-10 cursor-pointer rounded-lg border-none bg-transparent"
+                          />
+                          <input
+                            type="text"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="flex-1 rounded-xl border border-ui bg-ui-main/50 px-3 py-2 font-bold text-ui-main outline-none focus:border-primary"
+                            autoFocus
+                          />
+                        </div>
+                        {cat.type === 'expense' && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="relative">
+                              <Landmark className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-dim" />
+                              <input
+                                type="number"
+                                value={editBudgetLimit}
+                                onChange={(e) => setEditBudgetLimit(e.target.value)}
+                                placeholder="Budget"
+                                className="w-full rounded-xl border border-ui bg-ui-main/50 py-2 pl-9 pr-3 text-xs font-bold text-ui-main outline-none focus:border-primary"
+                              />
+                            </div>
+                            <select
+                              value={editBudgetInterval}
+                              onChange={(e) => setEditBudgetInterval(e.target.value as any)}
+                              className="w-full rounded-xl border border-ui bg-ui-main/50 py-2 px-3 text-xs font-bold text-ui-main outline-none focus:border-primary appearance-none"
+                            >
+                              <option value="weekly">Weekly</option>
+                              <option value="monthly">Monthly</option>
+                              <option value="yearly">Yearly</option>
+                            </select>
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -226,6 +300,9 @@ export const ManageCategories: React.FC = () => {
                           <div className="h-10 w-10 rounded-xl shadow-inner border border-ui" style={{ backgroundColor: cat.color }}></div>
                           <div>
                             <span className="font-black text-ui-main tracking-tight">{cat.name}</span>
+                            {cat.type === 'expense' && (
+                              <p className="text-[10px] font-bold text-primary mt-0.5">Budget: {formatCurrency(cat.budgetLimit || 0)} / {cat.budgetInterval}</p>
+                            )}
                             <div className="flex gap-2 mt-1">
                               {cat.isCapital && (
                                 <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded-full border border-amber-500/20">
@@ -240,7 +317,7 @@ export const ManageCategories: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => startEdit(cat)}
                             className="rounded-xl p-2 text-ui-dim transition-all hover:bg-primary/10 hover:text-primary"

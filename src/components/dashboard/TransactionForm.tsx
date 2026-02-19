@@ -6,15 +6,16 @@ import { Transaction, TransactionType } from '../../types';
 interface TransactionFormProps {
   onClose: () => void;
   onSubmit: (transaction: Omit<Transaction, 'id'>) => void;
+  initialData?: Transaction;
 }
 
-export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSubmit }) => {
+export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSubmit, initialData }) => {
   const { incomeCategories, expenseCategories } = useCategories();
-  const [type, setType] = useState<TransactionType>('expense');
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [category_id, setCategoryId] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [type, setType] = useState<TransactionType>(initialData?.type || 'expense');
+  const [amount, setAmount] = useState(initialData?.amount ? Math.abs(initialData.amount).toString() : '');
+  const [description, setDescription] = useState(initialData?.description || '');
+  const [category_id, setCategoryId] = useState(initialData?.category_id || '');
+  const [date, setDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
 
   const categories = type === 'income' ? incomeCategories : expenseCategories;
 
@@ -37,8 +38,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSub
       <div className="w-full max-w-lg rounded-[3rem] bg-ui-card p-10 shadow-2xl border border-ui animate-in zoom-in-95 duration-300">
         <div className="mb-10 flex items-center justify-between">
           <div>
-            <h2 className="text-4xl font-black tracking-tighter text-ui-main">Add Entry</h2>
-            <p className="text-xs font-bold uppercase tracking-widest text-ui-dim">Record to the ledger</p>
+            <h2 className="text-4xl font-black tracking-tighter text-ui-main">{initialData ? 'Edit Entry' : 'Add Entry'}</h2>
+            <p className="text-xs font-bold uppercase tracking-widest text-ui-dim">{initialData ? 'Update the ledger record' : 'Record to the ledger'}</p>
           </div>
           <button onClick={onClose} className="rounded-2xl bg-ui-main p-4 text-ui-dim hover:text-rose-500 transition-colors">
             <X className="h-6 w-6 stroke-[3]" />
@@ -140,7 +141,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSub
             type="submit"
             className="w-full rounded-[2rem] bg-primary py-6 text-xl font-black uppercase tracking-widest text-ui-card shadow-2xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] hover:shadow-primary/40"
           >
-            Confirm Entry
+            {initialData ? 'Update Entry' : 'Confirm Entry'}
           </button>
         </form>
       </div>
