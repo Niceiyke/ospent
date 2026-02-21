@@ -10,6 +10,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (token: string, user: User) => void;
+  signup: (token: string, user: User) => void;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   theme: 'light' | 'dark';
@@ -31,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedUser = localStorage.getItem('ospent_user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
-      setToken('');
+      setToken('persisted'); // Simplified placeholder for session existence
     }
   }, []);
 
@@ -54,7 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({ monthlyBudget: amount }),
       });
       if (res.ok) {
@@ -73,12 +73,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('ospent_user', JSON.stringify(newUser));
   };
 
+  const signup = (newToken: string, newUser: User) => {
+    setToken(newToken);
+    setUser(newUser);
+    localStorage.setItem('ospent_user', JSON.stringify(newUser));
+  };
+
   const logout = async () => {
     try {
-      await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
+      await fetch('/api/logout', { method: 'POST' });
     } catch (err) {
       console.error('Logout error', err);
     }
@@ -88,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user, theme, toggleTheme, updateMonthlyBudget }}>
+    <AuthContext.Provider value={{ user, token, login, signup, logout, isAuthenticated: !!user, theme, toggleTheme, updateMonthlyBudget }}>
       {children}
     </AuthContext.Provider>
   );

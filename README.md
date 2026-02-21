@@ -24,12 +24,13 @@ Ospent is a modern, high-performance financial tracking application built for th
 - **State/Hooks:** Custom Hooks for Transactions, Budgets, Categories, and Auth.
 - **Charts:** Recharts for advanced data visualization.
 - **Icons:** Lucide React.
-- **Backend:** Node.js, Express, Better-SQLite3.
+- **Backend:** Node.js, Express, Supabase (PostgreSQL).
 - **Security:** Bcrypt.js, JWT.
 - **DevOps:** Docker, Docker Compose, Traefik (Edge Network).
 
 ## 🏃‍♂️ Deployment
 
+### Docker (Self-hosted)
 The application is fully containerized.
 
 ```bash
@@ -40,6 +41,22 @@ cd ospent
 # 2. Start the infrastructure
 docker compose up -d --build
 ```
+
+### Vercel (Serverless)
+This project is optimized for Vercel deployment using Supabase (PostgreSQL).
+
+1.  **Supabase Setup:**
+    - Create a new project on [Supabase](https://supabase.com).
+    - Go to the **SQL Editor** in your Supabase dashboard.
+    - Copy the contents of `supabase_schema.sql` from this repository and run it to create the database tables.
+    - Get your `SUPABASE_URL` and `SUPABASE_KEY` (anon public key) from Project Settings -> API.
+
+2.  **Environment Variables:** In Vercel, set the following:
+    - `SUPABASE_URL`
+    - `SUPABASE_KEY`
+    - `JWT_SECRET` (A secure random string)
+
+3.  **Deploy:** Connect your repository to Vercel. It will automatically detect the Vite frontend and use `vercel.json` to route `/api` to the serverless backend.
 
 Access the master node at: `https://ospent.wordlyte.com`
 

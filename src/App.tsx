@@ -22,14 +22,22 @@ import { ReportsView } from './components/ReportsView';
 import { useTransactions } from './hooks/useTransactions';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { LoginScreen } from './components/LoginScreen';
+import { SignupScreen } from './components/SignupScreen';
 
 const MainApp: React.FC = () => {
   const { isAuthenticated, logout, user, theme, toggleTheme } = useAuth();
   const { transactions, addTransaction, stats, loading } = useTransactions();
   const [activeTab, setActiveTab] = useState('home');
   const [showAddTransaction, setShowAddTransaction] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
-  if (!isAuthenticated) return <LoginScreen />;
+  if (!isAuthenticated) {
+    return authMode === 'login' ? (
+      <LoginScreen onToggle={() => setAuthMode('signup')} />
+    ) : (
+      <SignupScreen onToggle={() => setAuthMode('login')} />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-ui-main pb-24 font-sans text-ui-main selection:bg-primary/30">
