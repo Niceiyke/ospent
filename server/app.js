@@ -32,13 +32,20 @@ app.use(express.json());
 
 // --- DATABASE STRATEGY ---
 const IS_PROD = process.env.NODE_ENV === 'production';
-const supabase = (IS_PROD || process.env.SUPABASE_URL) 
-  ? createClient(process.env.SUPABASE_URL || '', process.env.SUPABASE_KEY || '')
-  : null;
 
-const libsql = (!IS_PROD && !process.env.SUPABASE_URL)
-  ? createLibsqlClient({ url: `file:${path.join(__dirname, 'db', 'ospent.db')}` })
-  : null;
+let supabase = null;
+const url = process.env.SUPABASE_URL;
+const key = process.env.SUPABASE_KEY;
+
+if (url && key && url.trim() !== "" && url !== "undefined" && url.startsWith('http')) {
+  try {
+    supabase = createClient(url, key);
+  } catch (e) {
+    console.error("Supabase fail:", e.message);
+  }
+}
+
+const libsql = !supabase ? createLibsqlClient({ url: `file:${path.join(__dirname, 'db', 'ospent.db')}` }) : null;
 
 const db = {
   async query(table, action, options = {}) {
@@ -123,9 +130,11 @@ const db = {
 
 // --- INIT LIBSQL (Local Only) ---
 if (libsql) {
-  await libsql.execute(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT, monthly_budget REAL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-  await libsql.execute(`CREATE TABLE IF NOT EXISTS categories (id TEXT PRIMARY KEY, user_id TEXT, name TEXT, color TEXT, type TEXT, budget_limit REAL, budget_interval TEXT, is_capital INTEGER, is_recurring INTEGER, FOREIGN KEY(user_id) REFERENCES users(id))`);
-  await libsql.execute(`CREATE TABLE IF NOT EXISTS transactions (id TEXT PRIMARY KEY, user_id TEXT, date TEXT, amount REAL, type TEXT, category_id TEXT, description TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(category_id) REFERENCES categories(id))`);
+  try {
+    await libsql.execute(`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT, monthly_budget REAL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+    await libsql.execute(`CREATE TABLE IF NOT EXISTS categories (id TEXT PRIMARY KEY, user_id TEXT, name TEXT, color TEXT, type TEXT, budget_limit REAL, budget_interval TEXT, is_capital INTEGER, is_recurring INTEGER, FOREIGN KEY(user_id) REFERENCES users(id))`);
+    await libsql.execute(`CREATE TABLE IF NOT EXISTS transactions (id TEXT PRIMARY KEY, user_id TEXT, date TEXT, amount REAL, type TEXT, category_id TEXT, description TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(category_id) REFERENCES categories(id))`);
+  } catch (err) {}
 }
 
 // --- MIDDLEWARE ---
@@ -222,13 +231,13 @@ app.get('/api/transactions', authenticateToken, async (req, res) => {
 
   if (supabase) {
     const { data, count } = await supabase.from('transactions').select('*, categories(name, color)', { count: 'exact' }).eq('user_id', req.user.id).order('date', { ascending: false }).range(from, to);
-    return res.json({ data: data.map(t => ({ ...t, category_name: t.categories?.name, category_color: t.categories?.color, categories: undefined })), pagination: { page, limit, total: count || 0, totalPages: Math.ceil((count || 0) / limit) } });
+    return res.json({ data: (data || []).map(t => ({ ...t, category_name: t.categories?.name, category_color: t.categories?.color, categories: undefined })), pagination: { page, limit, total: count || 0, totalPages: Math.ceil((count || 0) / limit) } });
   } else {
     const { data } = await db.query('transactions', 'select', { eq: { user_id: req.user.id }, order: { column: 'date', ascending: false }, range: { from, to } });
     // Join simulation for local dev
     const { data: cats } = await db.query('categories', 'select', { eq: { user_id: req.user.id } });
     const catMap = Object.fromEntries(cats.map(c => [c.id, c]));
-    res.json({ data: data.map(t => ({ ...t, category_name: catMap[t.category_id]?.name, category_color: catMap[t.category_id]?.color })), pagination: { page, limit, total: data.length, totalPages: 1 } });
+    res.json({ data: (data || []).map(t => ({ ...t, category_name: catMap[t.category_id]?.name, category_color: catMap[t.category_id]?.color })), pagination: { page, limit, total: (data || []).length, totalPages: 1 } });
   }
 });
 
@@ -253,8 +262,8 @@ app.post('/api/logout', (req, res) => {
   res.sendStatus(200);
 });
 
-if (process.env.NODE_ENV !== 'production' && !process.env.SUPABASE_URL) {
-  app.listen(PORT, () => console.log(`Backend running with local DB on http://localhost:${PORT}`));
-}
+app.listen(PORT, () => {
+  console.log(`Backend listening on ${PORT} [${supabase ? "Supabase" : "LibSQL"}]`);
+});
 
 export default app;
