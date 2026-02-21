@@ -245,8 +245,8 @@ app.delete('/api/categories/:id', authenticateToken, async (req, res) => {
 });
 
 app.get('/api/transactions', authenticateToken, async (req, res) => {
-  const page = Math.max(1, parseInt(req.query.page as string) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
