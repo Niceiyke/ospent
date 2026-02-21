@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { User, Lock, ArrowRight, Loader2, Wallet } from 'lucide-react';
+import { User, Lock, ArrowRight, Loader2 } from 'lucide-react';
 
 interface LoginScreenProps {
   onToggle: () => void;

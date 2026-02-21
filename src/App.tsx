@@ -4,7 +4,6 @@ import {
   Home, 
   LayoutDashboard, 
   Plus, 
-  User,
   LogOut,
   SlidersHorizontal,
   BarChart3,
