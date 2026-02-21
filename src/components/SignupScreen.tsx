@@ -50,8 +50,8 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({ onToggle }) => {
     <div className="flex min-h-screen items-center justify-center bg-ui-main p-6 selection:bg-primary/30">
       <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-500">
         <div className="mb-12 text-center">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[2.5rem] bg-primary text-ui-card shadow-2xl shadow-primary/40">
-            <Sparkles className="h-10 w-10 stroke-[2.5]" />
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[2.5rem] bg-ui-card shadow-2xl border border-ui p-4">
+            <img src="/logo.svg" alt="Ospent Logo" className="h-full w-full" />
           </div>
           <h1 className="text-4xl font-black tracking-tighter text-ui-main">Join Ospent</h1>
           <p className="mt-2 text-sm font-bold uppercase tracking-widest text-ui-dim">Start Your Fiscal Strategy</p>

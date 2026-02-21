@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Outer Ring -->
+  <circle cx="100" cy="100" r="80" stroke="url(#grad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="380 120" />
+  <!-- Inner Strategic Node -->
+  <rect x="85" y="85" width="30" height="30" rx="8" fill="#10b981" />
+  <!-- Connection Lines -->
+  <path d="M100 60V85M100 115V140M60 100H85M115 100H140" stroke="#10b981" stroke-width="6" stroke-linecap="round" />
+</svg>

@@ -44,11 +44,11 @@ const MainApp: React.FC = () => {
       {/* Mobile Top Bar */}
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-ui bg-ui-main/80 px-6 py-4 backdrop-blur-xl">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-ui-card shadow-lg shadow-primary/20">
-            <User className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-ui-card border border-ui p-2 shadow-lg">
+            <img src="/logo.svg" alt="Logo" className="h-full w-full" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-ui-dim">Master</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-ui-dim">Ledger</p>
             <h1 className="text-sm font-black tracking-tight">{user?.username}</h1>
           </div>
         </div>
